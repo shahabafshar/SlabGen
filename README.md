@@ -7,8 +7,11 @@ A user-friendly **graphical interface** (GUI) for generating and exporting **sur
 - Generate **multiple terminations** automatically (all unique shifts) and optionally **force an orthogonal c-axis**.
 - **Export** the resulting slab(s) to `.vasp` with a suggested filename that encodes slab parameters.
 
-This GUI is built with **PyQt5** for the interface, **pymatgen** for structure manipulation, and **mp-api** for accessing the new Materials Project API; Created through a collaboration between myself and my wife, Zeinab Hajalifard, a Ph.D. student at ISU.
+This GUI is built with **PyQt5** for the interface, **pymatgen** for structure manipulation, and **mp-api** for accessing the new Materials Project API.
 
+
+> **Created through a collaboration between myself and my wife,  
+> Dr. [Zeinab Hajali Fard](https://scholar.google.com/citations?user=uvxuhmIAAAAJ&hl=en), Ph.D. student at ISU.**
 ---
 
 ## Features
