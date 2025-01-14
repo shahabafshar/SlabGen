@@ -65,8 +65,8 @@ Save that key in a file named `mp_api_key.txt` in the **same directory** as the 
 
 1. **Clone** this repository:
    ```bash
-   git clone https://github.com/<YOUR-USERNAME>/<REPO-NAME>.git
-   cd <REPO-NAME>
+   git clone https://github.com/shahabafshar/SlabGen.git
+   cd SlabGen
    ```
 2. **(Optional) Create a virtual environment**:
    ```bash
@@ -122,7 +122,7 @@ Save that key in a file named `mp_api_key.txt` in the **same directory** as the 
 
 ## Referencing This Work
 
-If you use or build upon this project in an **academic** or **research** context, please **cite** the repository and the authors (yourself and *Zeinab Hajalifard*) accordingly. For example, using an **IEEE-style reference**:
+If you use or build upon this project in an **academic** or **research** context, please **cite** the sitory and the authors (yourself and *Zeinab Hajalifard*) accordingly. For example, using an **IEEE-style reference**:
 
 ```
 [1] S. Afsharghoochani and Z. Hajali Fard, "Slab Generator GUI (PyQt5 + Pymatgen + mp-api)", 
