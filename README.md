@@ -126,7 +126,7 @@ If you use or build upon this project in an **academic** or **research** context
 
 ```
 [1] S. Afsharghoochani and Z. Hajali Fard, "Slab Generator GUI (PyQt5 + Pymatgen + mp-api)", 
-GitHub repository, 2023. [Online]. Available: https://github.com/shahabafshar/SlabGen
+GitHub repository, 2025. [Online]. Available: https://github.com/shahabafshar/SlabGen
 ```
 
 ---
