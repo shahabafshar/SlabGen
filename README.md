@@ -33,7 +33,7 @@ This GUI is built with **PyQt5** for the interface, **pymatgen** for structure m
 
 ## Screenshot
 
-![Screenshot of the Slab Generator GUI](SlabGen.png) 
+![Screenshot of the Slab Generator GUI](SlabGen.png)
 
 ---
 
