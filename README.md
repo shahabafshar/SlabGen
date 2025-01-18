@@ -11,7 +11,7 @@ This GUI is built with **PyQt5** for the interface, **pymatgen** for structure m
 
 
 > **Created through a collaboration between myself and my wife,  
-> Dr. [Zeinab Hajali Fard](https://scholar.google.com/citations?user=uvxuhmIAAAAJ&hl=en), Ph.D. student at ISU.**
+> [Zeinab Hajali Fard](https://scholar.google.com/citations?user=uvxuhmIAAAAJ&hl=en), Ph.D. student at ISU.**
 ---
 
 ## Features
