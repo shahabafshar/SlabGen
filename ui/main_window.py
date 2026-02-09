@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import (
 from mp_api.client import MPRester
 from pymatgen.core import Structure
 from pymatgen.io.vasp.inputs import Poscar
+from pymatgen.io.cif import CifWriter
 
 from core.slab_generator import (
     oriented_slab_replication,
@@ -307,13 +308,19 @@ class MainWindow(QMainWindow):
 
     def on_doc_selected(self, item):
         self.selected_doc_index = self.struct_list_widget.currentRow()
+        # Show bulk structure preview in 3D viewer
+        if (self.selected_doc_index is not None and
+                0 <= self.selected_doc_index < len(self.structure_docs)):
+            doc = self.structure_docs[self.selected_doc_index]
+            if doc.structure:
+                self.structure_viewer.update_structure(doc.structure)
 
     def upload_bulk_structure(self):
         file_path, _ = QFileDialog.getOpenFileName(
             self,
-            "Select a bulk structure file (POSCAR/CONTCAR)",
+            "Select a bulk structure file",
             "",
-            "VASP files (*.POSCAR *.CONTCAR *.vasp);;All Files (*)"
+            "Structure files (*.vasp *.cif *.POSCAR *.CONTCAR);;CIF files (*.cif);;VASP files (*.vasp *.POSCAR *.CONTCAR);;All Files (*)"
         )
         if file_path:
             try:
@@ -441,14 +448,17 @@ class MainWindow(QMainWindow):
                 f"vac{vac_thick}_{vac_mode}{ortho_flag}_shift{shift_val}"
             ).replace(".", "-") + ".vasp"
 
-            save_path, _ = QFileDialog.getSaveFileName(
-                self, "Save Slab .vasp", main_name,
-                "VASP files (*.vasp *.POSCAR);;All Files (*)"
+            save_path, selected_filter = QFileDialog.getSaveFileName(
+                self, "Save Slab", main_name,
+                "VASP files (*.vasp *.POSCAR);;CIF files (*.cif);;All Files (*)"
             )
             if not save_path:
                 return
 
-            Poscar(slab).write_file(save_path)
+            if save_path.endswith(".cif") or "CIF" in selected_filter:
+                CifWriter(slab).write_file(save_path)
+            else:
+                Poscar(slab).write_file(save_path)
 
             do_compare = self.comparison_check.isChecked()
             do_cleaves = self.generate_cleaves_check.isChecked()

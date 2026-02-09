@@ -67,6 +67,12 @@ def plot_structure_3d(ax, structure, show_box=True, show_labels=True):
         show_labels: show element labels on atoms
     """
     ax.clear()
+    ax.set_facecolor("white")
+    ax.xaxis.pane.set_facecolor((0.95, 0.95, 0.98, 1.0))
+    ax.yaxis.pane.set_facecolor((0.92, 0.92, 0.96, 1.0))
+    ax.zaxis.pane.set_facecolor((0.96, 0.96, 0.99, 1.0))
+    # Disable automatic z-order so we can force atoms in front of box lines
+    ax.computed_zorder = False
 
     if structure is None or len(structure) == 0:
         ax.set_xlabel("x (\u00c5)")
@@ -88,25 +94,26 @@ def plot_structure_3d(ax, structure, show_box=True, show_labels=True):
             }
         element_groups[symbol]["coords"].append(site.coords)
 
-    # Plot atoms by element group
+    # Draw unit cell bounding box FIRST (behind atoms)
+    if show_box:
+        _draw_lattice_box(ax, structure.lattice)
+
+    # Plot atoms by element group (in front of box)
     for symbol, data in element_groups.items():
         coords = np.array(data["coords"])
-        # Scale radius: 1.0 Ang -> scatter size ~200
-        scatter_size = (data["radius"] / DEFAULT_RADIUS) ** 2 * 200
+        # Scale radius: 1.0 Ang -> scatter size ~300
+        scatter_size = (data["radius"] / DEFAULT_RADIUS) ** 2 * 300
         ax.scatter(
             coords[:, 0], coords[:, 1], coords[:, 2],
             c=[data["color"]],
             s=scatter_size,
-            alpha=0.9,
+            alpha=0.95,
             edgecolors="black",
-            linewidth=0.5,
+            linewidth=0.8,
             label=symbol,
             depthshade=True,
+            zorder=10,
         )
-
-    # Draw unit cell bounding box
-    if show_box:
-        _draw_lattice_box(ax, structure.lattice)
 
     # Axes labels
     ax.set_xlabel("x (\u00c5)")
@@ -145,7 +152,8 @@ def _draw_lattice_box(ax, lattice):
     for i, j in edges:
         pts = np.array([corners[i], corners[j]])
         ax.plot(pts[:, 0], pts[:, 1], pts[:, 2],
-                color="gray", linewidth=0.8, alpha=0.5)
+                color="#333333", linewidth=1.2, alpha=0.6,
+                linestyle="--", zorder=1)
 
 
 def _set_equal_aspect(ax, coords):

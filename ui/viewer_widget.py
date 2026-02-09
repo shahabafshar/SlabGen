@@ -13,8 +13,16 @@ class StructureViewer(QWidget):
         super().__init__(parent)
 
         self.fig = Figure(figsize=(5, 5), dpi=100)
-        self.fig.patch.set_facecolor("#f0f0f0")
+        self.fig.patch.set_facecolor("white")
         self.ax = self.fig.add_subplot(111, projection="3d")
+        self.ax.set_facecolor("white")
+        # Make pane faces near-white for contrast with Qt gray panels
+        self.ax.xaxis.pane.fill = True
+        self.ax.yaxis.pane.fill = True
+        self.ax.zaxis.pane.fill = True
+        self.ax.xaxis.pane.set_facecolor((0.95, 0.95, 0.98, 1.0))
+        self.ax.yaxis.pane.set_facecolor((0.92, 0.92, 0.96, 1.0))
+        self.ax.zaxis.pane.set_facecolor((0.96, 0.96, 0.99, 1.0))
 
         self.canvas = FigureCanvas(self.fig)
         self.toolbar = NavigationToolbar(self.canvas, self)
