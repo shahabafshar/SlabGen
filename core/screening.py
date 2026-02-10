@@ -29,6 +29,7 @@ class SurfaceScreener:
         )
         total = len(miller_indices)
         results = []
+        failures = []
 
         for idx, (h, k, l) in enumerate(miller_indices):
             if progress_callback:
@@ -44,7 +45,8 @@ class SurfaceScreener:
                     all_terminations=True,
                     force_ortho=self.force_ortho,
                 )
-            except Exception:
+            except Exception as e:
+                failures.append({"miller": (h, k, l), "error": str(e)})
                 continue
 
             for slab in slabs:
@@ -67,5 +69,8 @@ class SurfaceScreener:
 
         if progress_callback:
             progress_callback(total, total)
+
+        # Attach failure info so callers can report it
+        self.failures = failures
 
         return results

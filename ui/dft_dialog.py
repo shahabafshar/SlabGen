@@ -1,8 +1,9 @@
 import os
-from PyQt5.QtWidgets import (
+from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel,
     QSpinBox, QDoubleSpinBox, QCheckBox, QComboBox,
     QPushButton, QTextEdit, QGroupBox, QFileDialog, QMessageBox,
+    QTabWidget, QWidget,
 )
 
 from core.dft_inputs import DFTInputGenerator
@@ -14,7 +15,7 @@ class DFTInputDialog(QDialog):
     def __init__(self, slab, suggested_dir_name="", parent=None):
         super().__init__(parent)
         self.setWindowTitle("Prepare DFT Inputs")
-        self.setMinimumSize(650, 550)
+        self.setMinimumSize(700, 600)
         self.slab = slab
         self.suggested_dir_name = suggested_dir_name
         self.generator = DFTInputGenerator(slab)
@@ -82,18 +83,59 @@ class DFTInputDialog(QDialog):
         row2.addWidget(self.dipole_check)
         settings_layout.addLayout(row2)
 
+        # Feature #17: Selective dynamics row
+        row3 = QHBoxLayout()
+        self.selective_dynamics_check = QCheckBox("Selective dynamics (freeze bottom layers)")
+        self.selective_dynamics_check.stateChanged.connect(self._update_preview)
+        row3.addWidget(self.selective_dynamics_check)
+
+        row3.addWidget(QLabel("Fix layers below z-frac:"))
+        self.freeze_threshold_spin = QDoubleSpinBox()
+        self.freeze_threshold_spin.setRange(0.0, 1.0)
+        self.freeze_threshold_spin.setValue(0.3)
+        self.freeze_threshold_spin.setSingleStep(0.05)
+        self.freeze_threshold_spin.setDecimals(2)
+        self.freeze_threshold_spin.setEnabled(False)
+        self.selective_dynamics_check.stateChanged.connect(
+            lambda checked: self.freeze_threshold_spin.setEnabled(bool(checked)))
+        row3.addWidget(self.freeze_threshold_spin)
+        settings_layout.addLayout(row3)
+
+        # Feature #23: POTCAR warning
+        potcar_row = QHBoxLayout()
+        potcar_label = QLabel(
+            "Note: Only POTCAR.spec (element list) is generated. "
+            "Set PMG_VASP_PSP_DIR to enable full POTCAR generation.")
+        potcar_label.setStyleSheet("color: #996600; font-size: 10px;")
+        potcar_label.setWordWrap(True)
+        potcar_row.addWidget(potcar_label)
+        settings_layout.addLayout(potcar_row)
+
         settings_group.setLayout(settings_layout)
         layout.addWidget(settings_group)
 
-        # ── INCAR Preview ──
-        preview_group = QGroupBox("INCAR Preview")
-        preview_layout = QVBoxLayout()
+        # ── Preview Tabs (UX #14: INCAR + KPOINTS) ──
+        preview_tabs = QTabWidget()
+
+        incar_tab = QWidget()
+        incar_layout = QVBoxLayout()
         self.incar_preview = QTextEdit()
         self.incar_preview.setReadOnly(True)
         self.incar_preview.setStyleSheet("font-family: Consolas, monospace; font-size: 11px;")
-        preview_layout.addWidget(self.incar_preview)
-        preview_group.setLayout(preview_layout)
-        layout.addWidget(preview_group)
+        incar_layout.addWidget(self.incar_preview)
+        incar_tab.setLayout(incar_layout)
+        preview_tabs.addTab(incar_tab, "INCAR Preview")
+
+        kpoints_tab = QWidget()
+        kpoints_layout = QVBoxLayout()
+        self.kpoints_preview = QTextEdit()
+        self.kpoints_preview.setReadOnly(True)
+        self.kpoints_preview.setStyleSheet("font-family: Consolas, monospace; font-size: 11px;")
+        kpoints_layout.addWidget(self.kpoints_preview)
+        kpoints_tab.setLayout(kpoints_layout)
+        preview_tabs.addTab(kpoints_tab, "KPOINTS Preview")
+
+        layout.addWidget(preview_tabs)
 
         # ── Action Buttons ──
         action_layout = QHBoxLayout()
@@ -128,8 +170,23 @@ class DFTInputDialog(QDialog):
 
     def _update_preview(self):
         config = self._get_config()
-        preview = self.generator.get_incar_preview(config)
-        self.incar_preview.setPlainText(preview)
+        self.incar_preview.setPlainText(self.generator.get_incar_preview(config))
+        self.kpoints_preview.setPlainText(self.generator.get_kpoints_string(config))
+
+    def _apply_selective_dynamics(self):
+        """Apply selective dynamics to the slab before generation (Feature #17)."""
+        if not self.selective_dynamics_check.isChecked():
+            return
+
+        threshold = self.freeze_threshold_spin.value()
+        sd_flags = []
+        for site in self.slab:
+            frac_z = site.frac_coords[2]
+            if frac_z < threshold:
+                sd_flags.append([False, False, False])  # Freeze
+            else:
+                sd_flags.append([True, True, True])     # Relax
+        self.slab.add_site_property("selective_dynamics", sd_flags)
 
     def _generate(self):
         output_dir = QFileDialog.getExistingDirectory(
@@ -140,6 +197,9 @@ class DFTInputDialog(QDialog):
 
         config = self._get_config()
         config["job_name"] = os.path.basename(output_dir) or "slab_relax"
+
+        # Apply selective dynamics if requested
+        self._apply_selective_dynamics()
 
         try:
             paths = self.generator.generate(output_dir, config)

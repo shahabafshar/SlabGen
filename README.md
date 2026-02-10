@@ -1,4 +1,4 @@
-# Slab Generator GUI (PyQt5 + Pymatgen + mp-api)
+# Slab Generator GUI (PySide6 + Pymatgen + mp-api)
 
 A user-friendly **graphical interface** (GUI) for generating and exporting **surface slabs** of crystalline materials, with options to:
 
@@ -7,7 +7,7 @@ A user-friendly **graphical interface** (GUI) for generating and exporting **sur
 - Generate **multiple terminations** automatically (all unique shifts) and optionally **force an orthogonal c-axis**.
 - **Export** the resulting slab(s) to `.vasp` with a suggested filename that encodes slab parameters.
 
-This GUI is built with **PyQt5** for the interface, **pymatgen** for structure manipulation, and **mp-api** for accessing the new Materials Project API.
+This GUI is built with **PySide6** for the interface, **pymatgen** for structure manipulation, and **mp-api** for accessing the new Materials Project API.
 
 
 > **Created through a collaboration between myself and my wife,  
@@ -42,7 +42,7 @@ This GUI is built with **PyQt5** for the interface, **pymatgen** for structure m
 Make sure you have Python 3.8+ installed. Then install the following Python packages:
 
 ```bash
-pip install mp-api pymatgen PyQt5
+pip install mp-api pymatgen PySide6
 ```
 
 Or you can use a `requirements.txt` with the following content:
@@ -50,7 +50,7 @@ Or you can use a `requirements.txt` with the following content:
 ```
 mp-api
 pymatgen
-PyQt5
+PySide6
 ```
 
 In addition, if you want to **search the Materials Project**, you need:
@@ -106,7 +106,7 @@ Save that key in a file named `mp_api_key.txt` in the **same directory** as the 
 
 ```
 <PROJECT-ROOT>/
-├─ main.py               # The primary PyQt5 application
+├─ main.py               # The primary PySide6 application
 ├─ mp_api_key.txt        # (Optional) Your Materials Project API key
 ├─ requirements.txt      # Requirements for the project
 ├─ SlabGen.png           # GUI screenshot image
@@ -125,7 +125,7 @@ Save that key in a file named `mp_api_key.txt` in the **same directory** as the 
 If you use or build upon this project in an **academic** or **research** context, please **cite** the sitory and the authors (yourself and *Zeinab Hajalifard*) accordingly. For example, using an **IEEE-style reference**:
 
 ```
-[1] S. Afsharghoochani and Z. Hajali Fard, "Slab Generator GUI (PyQt5 + Pymatgen + mp-api)", 
+[1] S. Afsharghoochani and Z. Hajali Fard, "Slab Generator GUI (PySide6 + Pymatgen + mp-api)", 
 GitHub repository, 2025. [Online]. Available: https://github.com/shahabafshar/SlabGen
 ```
 
@@ -167,7 +167,7 @@ This project is distributed under the [MIT License](LICENSE.md). You are free to
 
 - [**Materials Project**](https://materialsproject.org/) for providing crystal data and the new `mp_api` client.  
 - [**Pymatgen**](https://pymatgen.org/) for robust structure objects and slab generation.  
-- [**PyQt5**](https://pypi.org/project/PyQt5/) for the cross-platform GUI framework.  
+- [**PySide6**](https://pypi.org/project/PySide6/) for the cross-platform GUI framework.  
 
 ---
 

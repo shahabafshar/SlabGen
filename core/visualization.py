@@ -71,8 +71,6 @@ def plot_structure_3d(ax, structure, show_box=True, show_labels=True):
     ax.xaxis.pane.set_facecolor((0.95, 0.95, 0.98, 1.0))
     ax.yaxis.pane.set_facecolor((0.92, 0.92, 0.96, 1.0))
     ax.zaxis.pane.set_facecolor((0.96, 0.96, 0.99, 1.0))
-    # Disable automatic z-order so we can force atoms in front of box lines
-    ax.computed_zorder = False
 
     if structure is None or len(structure) == 0:
         ax.set_xlabel("x (\u00c5)")
@@ -82,45 +80,49 @@ def plot_structure_3d(ax, structure, show_box=True, show_labels=True):
                 ha="center", va="center", fontsize=12, color="gray")
         return
 
-    # Collect atom data grouped by element for efficient plotting
-    element_groups = {}
+    # Collect per-atom data for a single scatter call (correct depth sorting)
+    all_coords = []
+    all_colors = []
+    all_sizes = []
+    seen_elements = {}  # symbol -> (color, radius) for legend
+
     for site in structure:
         symbol = site.specie.symbol if hasattr(site.specie, "symbol") else str(site.specie)
-        if symbol not in element_groups:
-            element_groups[symbol] = {
-                "coords": [],
-                "color": get_element_color(site.specie),
-                "radius": get_element_radius(site.specie),
-            }
-        element_groups[symbol]["coords"].append(site.coords)
+        color = get_element_color(site.specie)
+        radius = get_element_radius(site.specie)
+        all_coords.append(site.coords)
+        all_colors.append(color)
+        all_sizes.append((radius / DEFAULT_RADIUS) ** 2 * 300)
+        if symbol not in seen_elements:
+            seen_elements[symbol] = color
 
-    # Draw unit cell bounding box FIRST (behind atoms)
+    all_coords = np.array(all_coords)
+    all_sizes = np.array(all_sizes)
+
+    # Draw unit cell bounding box
     if show_box:
         _draw_lattice_box(ax, structure.lattice)
 
-    # Plot atoms by element group (in front of box)
-    for symbol, data in element_groups.items():
-        coords = np.array(data["coords"])
-        # Scale radius: 1.0 Ang -> scatter size ~300
-        scatter_size = (data["radius"] / DEFAULT_RADIUS) ** 2 * 300
-        ax.scatter(
-            coords[:, 0], coords[:, 1], coords[:, 2],
-            c=[data["color"]],
-            s=scatter_size,
-            alpha=0.95,
-            edgecolors="black",
-            linewidth=0.8,
-            label=symbol,
-            depthshade=True,
-            zorder=10,
-        )
+    # Single scatter call — matplotlib depth-sorts all points together
+    ax.scatter(
+        all_coords[:, 0], all_coords[:, 1], all_coords[:, 2],
+        c=all_colors,
+        s=all_sizes,
+        alpha=0.95,
+        edgecolors="black",
+        linewidth=0.8,
+        depthshade=True,
+    )
 
     # Axes labels
     ax.set_xlabel("x (\u00c5)")
     ax.set_ylabel("y (\u00c5)")
     ax.set_zlabel("z (\u00c5)")
 
-    # Legend
+    # Legend via dummy markers (one per element)
+    for symbol, color in seen_elements.items():
+        ax.scatter([], [], [], c=[color], s=60, edgecolors="black",
+                   linewidth=0.8, label=symbol)
     ax.legend(loc="upper left", fontsize=8, framealpha=0.7)
 
     # Equal aspect ratio approximation
@@ -153,7 +155,7 @@ def _draw_lattice_box(ax, lattice):
         pts = np.array([corners[i], corners[j]])
         ax.plot(pts[:, 0], pts[:, 1], pts[:, 2],
                 color="#333333", linewidth=1.2, alpha=0.6,
-                linestyle="--", zorder=1)
+                linestyle="--")
 
 
 def _set_equal_aspect(ax, coords):

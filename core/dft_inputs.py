@@ -47,6 +47,38 @@ class DFTInputGenerator:
     def __init__(self, slab):
         self.slab = slab
 
+    def _build_incar_dict(self, config):
+        """Build INCAR parameter dict from config. Single source of truth."""
+        incar_dict = dict(DEFAULT_SLAB_INCAR)
+
+        if config.get("is_bulk", False):
+            incar_dict.update(BULK_OVERRIDES)
+
+        # Apply user overrides
+        if config.get("encut") is not None:
+            incar_dict["ENCUT"] = config["encut"]
+        if config.get("isif") is not None:
+            incar_dict["ISIF"] = config["isif"]
+        if config.get("ismear") is not None:
+            incar_dict["ISMEAR"] = config["ismear"]
+        if config.get("sigma") is not None:
+            incar_dict["SIGMA"] = config["sigma"]
+        if config.get("ediffg") is not None:
+            incar_dict["EDIFFG"] = config["ediffg"]
+
+        # Dipole correction for slabs
+        if config.get("auto_dipole", True) and not config.get("is_bulk", False):
+            frac_coords = self.slab.frac_coords
+            center = frac_coords.mean(axis=0)
+            incar_dict["LDIPOL"] = True
+            incar_dict["IDIPOL"] = 3
+            incar_dict["DIPOL"] = f"{center[0]:.4f} {center[1]:.4f} {center[2]:.4f}"
+
+        if config.get("extra_incar"):
+            incar_dict.update(config["extra_incar"])
+
+        return incar_dict
+
     def generate(self, output_dir, config=None):
         """
         Write VASP input files to output_dir.
@@ -70,35 +102,7 @@ class DFTInputGenerator:
         os.makedirs(output_dir, exist_ok=True)
 
         # Build INCAR
-        incar_dict = dict(DEFAULT_SLAB_INCAR)
-
-        if config.get("is_bulk", False):
-            incar_dict.update(BULK_OVERRIDES)
-
-        # Apply user overrides
-        if config.get("encut"):
-            incar_dict["ENCUT"] = config["encut"]
-        if config.get("isif") is not None:
-            incar_dict["ISIF"] = config["isif"]
-        if config.get("ismear") is not None:
-            incar_dict["ISMEAR"] = config["ismear"]
-        if config.get("sigma") is not None:
-            incar_dict["SIGMA"] = config["sigma"]
-        if config.get("ediffg") is not None:
-            incar_dict["EDIFFG"] = config["ediffg"]
-
-        # Dipole correction for slabs
-        if config.get("auto_dipole", True) and not config.get("is_bulk", False):
-            frac_coords = self.slab.frac_coords
-            center = frac_coords.mean(axis=0)
-            incar_dict["LDIPOL"] = True
-            incar_dict["IDIPOL"] = 3
-            incar_dict["DIPOL"] = f"{center[0]:.4f} {center[1]:.4f} {center[2]:.4f}"
-
-        if config.get("extra_incar"):
-            incar_dict.update(config["extra_incar"])
-
-        incar = Incar(incar_dict)
+        incar = Incar(self._build_incar_dict(config))
 
         # Build KPOINTS
         k_product = config.get("k_product", 50)
@@ -148,31 +152,16 @@ class DFTInputGenerator:
                 kpts.append(k)
         return Kpoints.gamma_automatic(kpts=tuple(kpts))
 
+    def get_kpoints_string(self, config=None):
+        """Return KPOINTS content as string for preview."""
+        if config is None:
+            config = {}
+        k_product = config.get("k_product", 50)
+        kpoints = self._generate_kpoints(k_product, is_bulk=config.get("is_bulk", False))
+        return str(kpoints)
+
     def get_incar_preview(self, config=None):
         """Return INCAR content as string for preview."""
         if config is None:
             config = {}
-
-        incar_dict = dict(DEFAULT_SLAB_INCAR)
-        if config.get("is_bulk", False):
-            incar_dict.update(BULK_OVERRIDES)
-        if config.get("encut"):
-            incar_dict["ENCUT"] = config["encut"]
-        if config.get("isif") is not None:
-            incar_dict["ISIF"] = config["isif"]
-        if config.get("ismear") is not None:
-            incar_dict["ISMEAR"] = config["ismear"]
-        if config.get("sigma") is not None:
-            incar_dict["SIGMA"] = config["sigma"]
-        if config.get("ediffg") is not None:
-            incar_dict["EDIFFG"] = config["ediffg"]
-        if config.get("auto_dipole", True) and not config.get("is_bulk", False):
-            frac_coords = self.slab.frac_coords
-            center = frac_coords.mean(axis=0)
-            incar_dict["LDIPOL"] = True
-            incar_dict["IDIPOL"] = 3
-            incar_dict["DIPOL"] = f"{center[0]:.4f} {center[1]:.4f} {center[2]:.4f}"
-        if config.get("extra_incar"):
-            incar_dict.update(config["extra_incar"])
-
-        return str(Incar(incar_dict))
+        return str(Incar(self._build_incar_dict(config)))

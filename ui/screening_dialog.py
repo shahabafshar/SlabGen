@@ -1,21 +1,23 @@
 import csv
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
-from PyQt5.QtWidgets import (
+import os
+from PySide6.QtCore import Qt, QThread, Signal
+from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QSpinBox,
     QDoubleSpinBox, QCheckBox, QComboBox, QPushButton,
     QProgressBar, QTableWidget, QTableWidgetItem, QGroupBox,
     QFileDialog, QMessageBox, QHeaderView,
 )
-from PyQt5.QtGui import QColor
+from PySide6.QtGui import QColor
 
+from pymatgen.io.vasp.inputs import Poscar
 from core.screening import SurfaceScreener
 
 
 class ScreeningWorker(QThread):
     """Run surface screening in a background thread."""
-    progress = pyqtSignal(int, int)  # current, total
-    finished = pyqtSignal(list)      # results
-    error = pyqtSignal(str)
+    progress = Signal(int, int)  # current, total
+    finished = Signal(list)      # results
+    error = Signal(str)
 
     def __init__(self, screener):
         super().__init__()
@@ -35,12 +37,12 @@ class ScreeningDialog(QDialog):
     """Dialog for batch surface screening with results table."""
 
     # Signal emitted when user wants to load a surface back into main window
-    load_surface = pyqtSignal(object, tuple)  # (slab, miller_index)
+    load_surface = Signal(object, tuple)  # (slab, miller_index)
 
-    def __init__(self, structure, parent=None):
+    def __init__(self, structure, parent=None, initial_params=None):
         super().__init__(parent)
         self.setWindowTitle("Surface Screening")
-        self.setMinimumSize(800, 600)
+        self.setMinimumSize(900, 600)
         self.structure = structure
         self.results = []
         self._worker = None
@@ -82,6 +84,16 @@ class ScreeningDialog(QDialog):
         params_group.setLayout(params_layout)
         layout.addWidget(params_group)
 
+        # UX #9: Apply initial params from main window
+        if initial_params:
+            self.zreps_spin.setValue(initial_params.get("z_reps", 3))
+            self.vacuum_spin.setValue(initial_params.get("vacuum", 10.0))
+            placement = initial_params.get("placement", "top-only")
+            idx = self.placement_combo.findText(placement)
+            if idx >= 0:
+                self.placement_combo.setCurrentIndex(idx)
+            self.ortho_check.setChecked(initial_params.get("ortho", False))
+
         # ── Run / Progress ──
         run_layout = QHBoxLayout()
         self.run_button = QPushButton("Run Screening")
@@ -115,6 +127,12 @@ class ScreeningDialog(QDialog):
         self.export_csv_button.clicked.connect(self._export_csv)
         self.export_csv_button.setEnabled(False)
         action_layout.addWidget(self.export_csv_button)
+
+        # Feature #19: Batch POSCAR export
+        self.export_poscar_button = QPushButton("Export All as POSCAR")
+        self.export_poscar_button.clicked.connect(self._export_all_poscar)
+        self.export_poscar_button.setEnabled(False)
+        action_layout.addWidget(self.export_poscar_button)
 
         self.load_button = QPushButton("Load Selected in Main Window")
         self.load_button.clicked.connect(self._load_selected)
@@ -162,12 +180,22 @@ class ScreeningDialog(QDialog):
         self._populate_table(results)
         self.run_button.setEnabled(True)
         self.export_csv_button.setEnabled(bool(results))
+        self.export_poscar_button.setEnabled(bool(results))
         self.load_button.setEnabled(bool(results))
         self.progress_bar.setValue(self.progress_bar.maximum())
-        self.status_label.setText(
-            f"Done. {len(results)} terminations across "
-            f"{len(set(r['miller_str'] for r in results))} surfaces."
-        )
+
+        n_surfaces = len(set(r['miller_str'] for r in results))
+        status = f"Done. {len(results)} terminations across {n_surfaces} surfaces."
+
+        # Report any surfaces that failed to generate
+        failures = getattr(self._worker.screener, "failures", [])
+        if failures:
+            fail_list = ", ".join(
+                f"({h},{k},{l})" for h, k, l in (f["miller"] for f in failures)
+            )
+            status += f"  [{len(failures)} failed: {fail_list}]"
+
+        self.status_label.setText(status)
 
     def _on_error(self, error_msg):
         self.run_button.setEnabled(True)
@@ -179,17 +207,33 @@ class ScreeningDialog(QDialog):
         self.table.setRowCount(len(results))
 
         for row, r in enumerate(results):
-            self.table.setItem(row, 0, QTableWidgetItem(r["miller_str"]))
-            self.table.setItem(row, 1, QTableWidgetItem(f"{r['shift']:.4f}"))
-            self.table.setItem(row, 2, QTableWidgetItem(str(r["num_atoms"])))
-            self.table.setItem(row, 3, QTableWidgetItem(f"{r['surface_area']:.2f}"))
+            # Store original index in first column's UserRole so sorting
+            # doesn't break the mapping between visual row and results list
+            miller_item = QTableWidgetItem(r["miller_str"])
+            miller_item.setData(Qt.UserRole, row)
+            self.table.setItem(row, 0, miller_item)
+
+            # Use numeric sort items for columns that should sort numerically
+            shift_item = QTableWidgetItem()
+            shift_item.setData(Qt.DisplayRole, float(round(r["shift"], 4)))
+            self.table.setItem(row, 1, shift_item)
+
+            atoms_item = QTableWidgetItem()
+            atoms_item.setData(Qt.DisplayRole, int(r["num_atoms"]))
+            self.table.setItem(row, 2, atoms_item)
+
+            area_item = QTableWidgetItem()
+            area_item.setData(Qt.DisplayRole, float(round(r["surface_area"], 2)))
+            self.table.setItem(row, 3, area_item)
 
             sym_text = "Yes" if r["is_symmetric"] else ("No" if r["is_symmetric"] is not None else "N/A")
             sym_item = QTableWidgetItem(sym_text)
             if r["is_symmetric"] is True:
                 sym_item.setBackground(QColor(200, 255, 200))
+                sym_item.setForeground(QColor(0, 80, 0))
             elif r["is_symmetric"] is False:
                 sym_item.setBackground(QColor(255, 255, 200))
+                sym_item.setForeground(QColor(120, 100, 0))
             self.table.setItem(row, 4, sym_item)
 
             self.table.setItem(row, 5, QTableWidgetItem(r["formula"]))
@@ -218,11 +262,47 @@ class ScreeningDialog(QDialog):
 
         QMessageBox.information(self, "Exported", f"Results saved to:\n{path}")
 
+    def _export_all_poscar(self):
+        """Export all screening results as POSCAR files (Feature #19)."""
+        if not self.results:
+            return
+
+        output_dir = QFileDialog.getExistingDirectory(
+            self, "Select Output Directory for POSCAR Files")
+        if not output_dir:
+            return
+
+        exported = []
+        for r in self.results:
+            h, k, l = r["miller"]
+            shift = r["shift"]
+            fname = f"POSCAR_{h}-{k}-{l}_shift{shift}.vasp".replace(".", "-") + ""
+            # Clean up double extensions from replace
+            fname = f"POSCAR_{h}{k}{l}_shift{str(shift).replace('.', '-')}.vasp"
+            fpath = os.path.join(output_dir, fname)
+            Poscar(r["slab"]).write_file(fpath)
+            exported.append(fname)
+
+        QMessageBox.information(
+            self, "Export Complete",
+            f"Exported {len(exported)} POSCAR files to:\n{output_dir}")
+
+    def _get_original_index(self, visual_row):
+        """Map a visual table row back to the original results list index."""
+        item = self.table.item(visual_row, 0)
+        if item is None:
+            return -1
+        return item.data(Qt.UserRole)
+
     def _load_selected(self):
-        row = self.table.currentRow()
-        if row < 0 or row >= len(self.results):
+        visual_row = self.table.currentRow()
+        if visual_row < 0:
             QMessageBox.warning(self, "Error", "No surface selected.")
             return
-        r = self.results[row]
+        orig_idx = self._get_original_index(visual_row)
+        if orig_idx < 0 or orig_idx >= len(self.results):
+            QMessageBox.warning(self, "Error", "No surface selected.")
+            return
+        r = self.results[orig_idx]
         self.load_surface.emit(r["slab"], r["miller"])
         self.close()

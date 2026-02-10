@@ -59,7 +59,10 @@ def cut_out_z_region(structure, zmin, zmax):
         return None
     new_struct = Structure(lattice=structure.lattice, species=[], coords=[])
     for s in new_sites:
-        new_struct.append(s.species, s.coords, coords_are_cartesian=True)
+        new_struct.append(
+            s.species, s.coords, coords_are_cartesian=True,
+            properties=s.properties if s.properties else None,
+        )
     return new_struct
 
 

@@ -36,7 +36,7 @@ An open-source GUI that handles the full surface workflow in one place.
 **Screen** all symmetrically distinct orientations at once. Catalogs every termination, flags symmetric vs. asymmetric
 **Prepare** ready-to-submit VASP file sets (INCAR, KPOINTS, POSCAR, job script) with automatic dipole corrections
 
-Built with Python, PyQt5, and pymatgen. Open source, MIT license.
+Built with Python, PySide6, and pymatgen. Open source, MIT license.
 
 ---
 

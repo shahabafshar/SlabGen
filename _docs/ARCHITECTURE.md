@@ -10,7 +10,7 @@ SlabGen/
 │   ├── screening.py           # Batch surface screening engine
 │   ├── dft_inputs.py          # VASP input file generation
 │   └── visualization.py       # Matplotlib 3D structure plotting
-├── ui/                        # PyQt5 GUI components
+├── ui/                        # PySide6 GUI components
 │   ├── main_window.py         # MainWindow (primary application window)
 │   ├── viewer_widget.py       # StructureViewer (embeddable 3D canvas)
 │   ├── screening_dialog.py    # ScreeningDialog + ScreeningWorker (QThread)
@@ -130,7 +130,7 @@ Embeddable QWidget wrapping a matplotlib 3D figure.
 |---------|----------|
 | pymatgen | Structure, Slab, SlabGenerator, Poscar, Incar, Kpoints, CifWriter, StructureMatcher, Element |
 | mp-api | MPRester for Materials Project queries |
-| PyQt5 | GUI framework |
+| PySide6 | GUI framework |
 | matplotlib | 3D structure visualization (FigureCanvasQTAgg) |
 | numpy | Coordinate transformations |
 
