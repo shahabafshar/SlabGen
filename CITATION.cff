@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+title: "SlabGen: An Interactive Platform for Automated Surface Slab Generation, Screening, and DFT Workflow Preparation"
+message: "If you use this software, please cite it as below."
+type: software
+authors:
+  - given-names: Shahabeddin
+    family-names: Afsharghoochani
+    affiliation: Iowa State University
+    orcid: "https://orcid.org/0009-0000-3682-0471"
+  - given-names: Zeinab
+    family-names: Hajali Fard
+    affiliation: Iowa State University
+    orcid: ""
+repository-code: "https://github.com/shahabafshar/SlabGen"
+license: MIT
+version: "1.0.0"
+date-released: "2025-01-01"
+keywords:
+  - surface slab
+  - crystal surfaces
+  - materials science
+  - DFT
+  - VASP
+  - pymatgen
+  - computational materials

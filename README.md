@@ -1,175 +1,181 @@
-# Slab Generator GUI (PySide6 + Pymatgen + mp-api)
+# SlabGen -- Surface Slab Generation Platform
 
-A user-friendly **graphical interface** (GUI) for generating and exporting **surface slabs** of crystalline materials, with options to:
+A **PySide6 GUI** for generating, screening, and exporting surface slabs of crystalline materials, with integrated 3D visualization and DFT workflow preparation.
 
-- **Search Materials Project** (using `mp-api`) for a bulk structure, **OR** upload a **local POSCAR**.
-- Specify **Miller indices** *(h, k, l)*, **slab thickness** (Å), **vacuum thickness** (Å), and vacuum placement (top-only or centered).
-- Generate **multiple terminations** automatically (all unique shifts) and optionally **force an orthogonal c-axis**.
-- **Export** the resulting slab(s) to `.vasp` with a suggested filename that encodes slab parameters.
+> **Created by [Shahab Afshar](https://github.com/shahabafshar) and [Zeinab Hajali Fard](https://scholar.google.com/citations?user=uvxuhmIAAAAJ&hl=en), Iowa State University.**
 
-This GUI is built with **PySide6** for the interface, **pymatgen** for structure manipulation, and **mp-api** for accessing the new Materials Project API.
+---
 
+![SlabGen](_docs/drz-mascot.webp)
 
-> **Created through a collaboration between myself and my wife,  
-> [Zeinab Hajali Fard](https://scholar.google.com/citations?user=uvxuhmIAAAAJ&hl=en), Ph.D. student at ISU.**
 ---
 
 ## Features
 
-- **Two methods** of providing a bulk structure:
-  1. Query the Materials Project (enter a formula, e.g., `Mo2C`), then select from returned structures.
-  2. **Upload** a local VASP file *(POSCAR, CONTCAR, or `.vasp`)* to use as the bulk.
-- **Easy slab customization**:
-  - (h, k, l) Miller index
-  - Slab thickness and vacuum thickness
-  - Vacuum placement: top-only or centered
-  - Single or **all terminations** (slab shifts) from `SlabGenerator`
-  - Force orthogonal c-axis using `get_orthogonal_c_slab()`
-- **GUI**: A simple, multi-column layout with clear “OR” separation for the two input methods, plus an advanced panel for slab generation options.
-- **Filename suggestion**: The export dialog suggests a `.vasp` name embedding **Miller indices, thickness, vacuum, shift,** etc.
-- **No atom “stretching”**: We rely on PyMatgen’s internal methods for correct vacuum creation and optional orthogonalization.
+- **Materials Project Integration** -- search by formula (e.g. `Mo2C`), browse results with space group, crystal system, atoms, energy above hull
+- **Local File Upload** -- load POSCAR, CONTCAR, or CIF files directly
+- **Slab Generation** -- configurable Miller indices (h,k,l), z-repetitions, vacuum thickness, all unique terminations
+- **Interactive 3D Viewer** -- embedded matplotlib canvas with Jmol color scheme, lattice box, rotation/zoom
+- **Surface Screening** -- batch exploration of all symmetrically distinct surfaces with progress bar and symmetry analysis
+- **DFT Input Generation** -- VASP INCAR (with auto dipole correction), KPOINTS (k_z=1 for slabs), POSCAR, POTCAR.spec, SLURM job script
+- **Export** -- single slab POSCAR, batch POSCAR export, CSV screening results
 
 ---
 
-## Screenshot
+## Architecture
 
-![Screenshot of the Slab Generator GUI](SlabGen.png)
+```text
+SlabGen/
+├── main.py                    # Entry point (thin launcher)
+├── core/
+│   ├── slab_generator.py      # Slab generation + oriented replication
+│   ├── screening.py           # SurfaceScreener: batch Miller index screening
+│   ├── dft_inputs.py          # DFTInputGenerator: VASP input files
+│   └── visualization.py       # 3D structure plotting (Jmol colors, lattice box)
+├── ui/
+│   ├── main_window.py         # MainWindow: primary GUI with 3D viewer
+│   ├── viewer_widget.py       # StructureViewer: embeddable matplotlib 3D canvas
+│   ├── screening_dialog.py    # Batch screening dialog with results table
+│   └── dft_dialog.py          # DFT input configuration with INCAR preview
+├── demo/
+│   ├── scripts/               # Demo and poster generation scripts
+│   └── output/                # Generated outputs (screenshots, plots, DFT inputs)
+└── demo_output/               # GUI screenshots for documentation
+```
+
+### Key Algorithm: `oriented_slab_replication`
+
+Two-stage slab generation avoids atom-stretching artifacts:
+1. **Orient**: rotate bulk crystal so target (h,k,l) aligns with z-axis, replicate along z
+2. **Generate**: apply `SlabGenerator` with (0,0,1) on the oriented structure for vacuum and terminations
 
 ---
 
 ## Requirements
 
-Make sure you have Python 3.8+ installed. Then install the following Python packages:
+Python 3.8+ with the following packages:
 
 ```bash
-pip install mp-api pymatgen PySide6
+pip install -r requirements.txt
 ```
 
-Or you can use a `requirements.txt` with the following content:
+Dependencies: `mp-api`, `pymatgen`, `PySide6`, `matplotlib`, `numpy`
 
-```
-mp-api
-pymatgen
-PySide6
-```
-
-In addition, if you want to **search the Materials Project**, you need:
-1. A **Materials Project account**.
-2. A **new** API key from [materialsproject.org/api](https://materialsproject.org/api).
-
-Save that key in a file named `mp_api_key.txt` in the **same directory** as the script (the code will read it automatically). If this file is missing or empty, you can still upload a local structure, but the Materials Project features will be disabled.
+**Optional**: Place a [Materials Project API key](https://materialsproject.org/api) in `mp_api_key.txt` in the project root. Without it, MP search is disabled but local file upload works.
 
 ---
 
-## Getting Started
+## Quick Start
 
-1. **Clone** this repository:
-   ```bash
-   git clone https://github.com/shahabafshar/SlabGen.git
-   cd SlabGen
-   ```
-2. **(Optional) Create a virtual environment**:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate    # On Linux/Mac
-   venv\Scripts\activate       # On Windows
-   ```
-3. **Install dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-   *(Or see the “Requirements” section above.)*
-4. **(Optional) Provide your MP API key**:
-   - Create a text file called **`mp_api_key.txt`**.
-   - Paste your API key on the first line.
-   - Save in the **root** of this project (same folder as `main.py`).
+```bash
+# Clone and install
+git clone https://github.com/shahabafshar/SlabGen.git
+cd SlabGen
+pip install -r requirements.txt
 
----
+# (Optional) Add your Materials Project API key
+echo "YOUR_API_KEY" > mp_api_key.txt
 
-## Usage
-
-1. **Run the GUI**:
-   ```bash
-   python main.py
-   ```
-2. In the GUI:
-   - **Left Panel**: Type a formula (e.g. “Mo2C”), click **Search**, and select a structure from the list. 
-   - **OR**: In the **right panel**, click **Upload** to browse for a local `POSCAR`, `CONTCAR`, or `.vasp`.
-   - Adjust **Miller indices (h, k, l)**, **slab thickness**, **vacuum** thickness, vacuum placement (top-only or centered).
-   - **Optional**: Check “All Terminations?” to explore different slab shifts. Check “Orthogonal c-axis?” to reorient the slab.
-   - Click **Generate Slabs**. 
-   - A list of generated slabs appears below. Pick one, then **Export** to `.vasp`. The code suggests a filename that encodes your chosen parameters.
-
----
-
-## File Structure
-
-```
-<PROJECT-ROOT>/
-├─ main.py               # The primary PySide6 application
-├─ mp_api_key.txt        # (Optional) Your Materials Project API key
-├─ requirements.txt      # Requirements for the project
-├─ SlabGen.png           # GUI screenshot image
-└─ ...
+# Run the GUI
+python main.py
 ```
 
-- **`main.py`**: Contains all the GUI code.  
-- **`mp_api_key.txt`**: Optional file. If present, the code will read your new Materials Project API key from here.  
-- **`requirements.txt`**: Lists the dependencies needed to run this code.
-- **`SlabGen.png`**: A screenshot of the project UI.
+### Demo Scripts
 
----
+```bash
+# Capture GUI screenshots automatically (Mo2C workflow)
+python demo/scripts/capture_gui_screenshots_v2.py
 
-## Referencing This Work
+# Programmatic demo with plots and DFT inputs (no GUI)
+python demo/scripts/quick_demo.py
 
-If you use or build upon this project in an **academic** or **research** context, please **cite** the sitory and the authors (yourself and *Zeinab Hajalifard*) accordingly. For example, using an **IEEE-style reference**:
+# Generate GPSS conference poster (48x36 PPTX)
+python demo/scripts/generate_poster.py
 
-```
-[1] S. Afsharghoochani and Z. Hajali Fard, "Slab Generator GUI (PySide6 + Pymatgen + mp-api)", 
-GitHub repository, 2025. [Online]. Available: https://github.com/shahabafshar/SlabGen
+# Generate presentation slides (13 slides, 16:9 PPTX)
+python demo/scripts/generate_presentation.py
 ```
 
 ---
 
-## Example Flow
+## Usage Workflow
 
-1. Start the GUI:  
-   `python main.py`
-2. Enter a formula, e.g. **`Mo2C`**, then **Search**. Wait for the results.  
-3. Select a structure from the list (e.g., `mp-14181 | Mo2C | P6/mmm`).  
-4. **OR** click **Upload** if you prefer a local file.  
-5. Adjust `(h, k, l)`, set `min_slab_size` (slab thickness), `min_vacuum_size` (vacuum), pick “top-only” or “centered.”  
-6. Check “All Terminations?” if you want multiple surface shifts, or “Orthogonal c-axis?” if you want the slab reoriented.  
-7. Click **Generate Slabs**. A list of possible slabs appears.  
-8. Pick a slab from the list, click **Export**. A file dialog suggests `POSCAR_{mat_id}_{h}-{k}-{l}_slab{slab_thick}_...`.  
-9. Save the file. That `.vasp` can be opened in VESTA, PyMOL, or used in **DFT codes** (e.g., VASP).
+1. **Search or Upload**: enter a formula (e.g. `Mo2C`) and search Materials Project, or upload a local POSCAR/CIF
+2. **Select Structure**: pick from search results -- the 3D viewer shows the bulk unit cell
+3. **Configure Slabs**: set Miller indices (h,k,l), z-repetitions, vacuum, check "All Terminations"
+4. **Generate**: click "Generate Slabs" -- results table shows all terminations with shift, atoms, area, symmetry
+5. **Inspect**: select a slab to view in 3D with properties (formula, atoms, surface area, thickness)
+6. **Screen**: click "Screen All Surfaces" to batch-explore all symmetrically distinct orientations
+7. **Export**: export individual slabs as POSCAR, batch-export all, or prepare full VASP input sets
+
+### Keyboard Shortcuts
+
+| Shortcut | Action |
+| -------------- | ----------------------- |
+| Enter | Search Materials Project |
+| Ctrl+G | Generate Slabs |
+| Ctrl+E | Export Selected Slab |
+| Ctrl+D | Prepare DFT Inputs |
+| Ctrl+Shift+S | Screen All Surfaces |
+| Ctrl+O | Upload Local File |
+
+---
+
+## Case Study: Mo2C
+
+Using alpha-Mo2C (mp-1552, Pbcn, orthorhombic, 12 atoms):
+
+- **(1,1,1) surface**: 6 unique terminations, 36 atoms each, 49.20 A^2 surface area
+- **Full screening** (max Miller index 1): 20 terminations across 7 surface orientations, 10 symmetric + 10 asymmetric
+- **DFT inputs**: INCAR with auto dipole correction, KPOINTS with k_z=1, SLURM job script
+
+See [FEATURE_DEMONSTRATION.md](FEATURE_DEMONSTRATION.md) for the complete walkthrough with screenshots.
+
+---
+
+## Export Filename Convention
+
+```text
+POSCAR_{mat_id}_{h}-{k}-{l}_z{z_reps}_vac{vacuum}_{placement}{ortho}_shift{shift}.vasp
+```
+
+---
+
+## Citing This Work
+
+If you use SlabGen in academic or research work, please cite it. You can use GitHub's built-in **"Cite this repository"** button on the sidebar, or use the BibTeX entry below:
+
+```bibtex
+@software{afsharghoochani2025slabgen,
+  author    = {Afsharghoochani, Shahab and Hajali Fard, Zeinab},
+  title     = {{SlabGen}: An Interactive Platform for Automated Surface Slab
+               Generation, Screening, and {DFT} Workflow Preparation},
+  year      = {2025},
+  url       = {https://github.com/shahabafshar/SlabGen},
+  license   = {MIT}
+}
+```
 
 ---
 
 ## Contributing
 
-1. **Fork** the repo and create your feature branch (`git checkout -b feature/awesome-feature`).  
-2. **Commit** your changes (`git commit -am 'Add awesome feature'`).  
-3. **Push** to the branch (`git push origin feature/awesome-feature`).  
-4. **Open a Pull Request**.
-
-We welcome improvements or bug fixes, especially around new surface analysis features, alternate visualization, or better user guidance in the GUI.
+1. Fork the repo and create your feature branch (`git checkout -b feature/awesome-feature`)
+2. Commit your changes (`git commit -am 'Add awesome feature'`)
+3. Push to the branch (`git push origin feature/awesome-feature`)
+4. Open a Pull Request
 
 ---
 
 ## License
 
-This project is distributed under the [MIT License](LICENSE.md). You are free to use, modify, and distribute this software in accordance with the license terms.
+Distributed under the [MIT License](LICENSE.md).
 
 ---
 
 ## Acknowledgments
 
-- [**Materials Project**](https://materialsproject.org/) for providing crystal data and the new `mp_api` client.  
-- [**Pymatgen**](https://pymatgen.org/) for robust structure objects and slab generation.  
-- [**PySide6**](https://pypi.org/project/PySide6/) for the cross-platform GUI framework.  
-
----
-
-**Enjoy generating surface slabs!** If you have questions or encounter issues, please open an [Issue](../../issues) on GitHub. 
-
+- [Materials Project](https://materialsproject.org/) for crystal structure data and the `mp-api` client
+- [pymatgen](https://pymatgen.org/) for structure objects, slab generation, and surface analysis
+- [PySide6](https://pypi.org/project/PySide6/) for the cross-platform Qt6 GUI framework
+- [matplotlib](https://matplotlib.org/) for embedded 3D visualization
