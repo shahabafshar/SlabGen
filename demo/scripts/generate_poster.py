@@ -214,7 +214,7 @@ def build_poster():
     tb = tbox(slide, Inches(1.0), Inches(2.1), Inches(37), Inches(0.95))
     tf = tb.text_frame
     tf.word_wrap = True
-    para(tf, "Shahab Afshar  and  Zeinab Hajali Fard",
+    para(tf, "Shahab Afshar  and  Zeinab H. Fard",
          size=28, bold=True, color=GOLD, after=Pt(3), first=True)
     para(tf, "Iowa State University of Science and Technology",
          size=24, bold=False, color=RGBColor(0xFF, 0xDD, 0xDD), after=Pt(0))

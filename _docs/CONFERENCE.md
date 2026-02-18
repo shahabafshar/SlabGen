@@ -68,7 +68,7 @@ Standard 48" x 36" landscape. The poster can carry more detail than the talk —
 |                    TITLE BAR                        |
 |  SlabGen: An Integrated Platform for Surface Slab  |
 |  Generation and DFT Workflow Preparation            |
-|  S. Afsharghoochani, Z. Hajali Fard — Iowa State   |
+|  S. Afsharghoochani, Z. H. Fard — Iowa State   |
 +----------+----------+----------+-------------------+
 |          |          |          |                    |
 | PROBLEM  | APPROACH | FEATURES |   SCREENSHOT       |

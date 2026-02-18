@@ -1,6 +1,6 @@
 # SlabGen: An Integrated Platform for Surface Slab Generation and DFT Workflow Preparation
 
-**Shahab Afsharghoochani** and **Zeinab Hajali Fard**
+**Shahab Afsharghoochani** and **Zeinab H. Fard**
 
 Department of Materials Science and Engineering, Iowa State University, Ames, IA
 

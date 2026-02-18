@@ -2,7 +2,7 @@
 
 A **PySide6 GUI** for generating, screening, and exporting surface slabs of crystalline materials, with integrated 3D visualization and DFT workflow preparation.
 
-> **Created by [Shahab Afshar](https://github.com/shahabafshar) and [Zeinab Hajali Fard](https://scholar.google.com/citations?user=uvxuhmIAAAAJ&hl=en), Iowa State University.**
+> **Created by [Shahab Afshar](https://github.com/shahabafshar) and [Zeinab H. Fard](https://scholar.google.com/citations?user=uvxuhmIAAAAJ&hl=en), Iowa State University.**
 
 ---
 
@@ -147,7 +147,7 @@ If you use SlabGen in academic or research work, please cite it. You can use Git
 
 ```bibtex
 @software{afsharghoochani2025slabgen,
-  author    = {Afsharghoochani, Shahab and Hajali Fard, Zeinab},
+  author    = {Afsharghoochani, Shahab and H. Fard, Zeinab},
   title     = {{SlabGen}: An Interactive Platform for Automated Surface Slab
                Generation, Screening, and {DFT} Workflow Preparation},
   year      = {2025},

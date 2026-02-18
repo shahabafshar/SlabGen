@@ -189,7 +189,7 @@ def build():
 
     tb = tbox(s, Inches(0.8), Inches(4.8), Inches(11.5), Inches(1.2))
     tf = tb.text_frame; tf.word_wrap = True
-    para(tf, "Shahab Afshar  and  Zeinab Hajali Fard",
+    para(tf, "Shahab Afshar  and  Zeinab H. Fard",
          size=24, bold=True, color=GOLD, first=True, after=Pt(4))
     para(tf, "Iowa State University of Science and Technology",
          size=20, color=RGBColor(0xFF, 0xDD, 0xDD), after=Pt(0))

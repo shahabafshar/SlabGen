@@ -1,6 +1,6 @@
 # SlabGen: Systematic Surface Generation, Screening, and DFT Preparation
 
-Shahab Afsharghoochani and Zeinab Hajali Fard
+Shahab Afsharghoochani and Zeinab H. Fard
 Iowa State University, Materials Science and Engineering
 
 14th Annual GPSS Research Conference | February 20, 2026
